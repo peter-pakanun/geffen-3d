@@ -959,6 +959,25 @@ html, body {
   display: none !important;
 }
 
+.credit-pill {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 10;
+  background: rgba(20, 28, 52, 0.85);
+  border: 1px solid #5c7bd6;
+  border-radius: 99px;
+  padding: 5px 12px;
+  color: #dce8ff;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+}
+.credit-pill strong {
+  color: #ffe066;
+}
+
 @media (max-width: 960px) {
   #hud-chatlog {
     width: 260px;

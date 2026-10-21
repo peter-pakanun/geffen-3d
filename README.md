@@ -1,5 +1,8 @@
 # Geffen: City of Magic — 3D Browser RPG
 
+> **Created to test a single prompt using Antigravity + Gemini 4 Argon:**  
+> *"Make a 3d browser based game, 3D map like Geffen."*
+
 A 3D browser-based RPG inspired by **Geffen** (*Ragnarok Online*), built with Three.js and Web Audio.
 
 ## 🌐 Play Live
