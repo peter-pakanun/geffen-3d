@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geffen: City of Magic — 3D Browser RPG</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- 3D WebGL Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Floating 2D World Labels Layer (Damage numbers, NPC names, Cast bars, Chat bubbles) -->
+  <div id="world-labels"></div>
+
+  <!-- Top-Left: Classic RO Basic Info Window -->
+  <div id="hud-basic-info" class="ro-window">
+    <div class="ro-titlebar">
+      <span class="ro-title-dot"></span>
+      <span class="ro-title-text">Basic Info — Geffen</span>
+      <span id="zone-badge" class="zone-badge safe">Town Safe Zone</span>
+    </div>
+    <div class="ro-body basic-info-grid">
+      <div class="char-header">
+        <div class="char-avatar" id="char-avatar-icon" title="Arch Wizard">🧙</div>
+        <div class="char-identity">
+          <div class="char-name-row">
+            <span id="ui-char-name" class="char-name">Arcanist</span>
+            <span id="ui-weapon-refine" class="refine-badge">+0 Staff</span>
+          </div>
+          <div class="char-job">High Wizard • <span id="ui-map-name">geffen.rsw</span></div>
+        </div>
+      </div>
+
+      <div class="bars-section">
+        <div class="stat-bar-row">
+          <span class="bar-label">HP</span>
+          <div class="bar-track hp-track">
+            <div id="ui-hp-fill" class="bar-fill hp-fill" style="width: 100%"></div>
+            <span id="ui-hp-text" class="bar-value">450 / 450</span>
+          </div>
+        </div>
+        <div class="stat-bar-row">
+          <span class="bar-label">SP</span>
+          <div class="bar-track sp-track">
+            <div id="ui-sp-fill" class="bar-fill sp-fill" style="width: 100%"></div>
+            <span id="ui-sp-text" class="bar-value">320 / 320</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="exp-section">
+        <div class="exp-row">
+          <span class="exp-label">Base Lv. <strong id="ui-base-lv">1</strong></span>
+          <div class="exp-track">
+            <div id="ui-base-exp" class="exp-fill" style="width: 0%"></div>
+          </div>
+          <span id="ui-base-pct" class="exp-pct">0%</span>
+        </div>
+        <div class="exp-row">
+          <span class="exp-label">Job Lv. <strong id="ui-job-lv">1</strong></span>
+          <div class="exp-track">
+            <div id="ui-job-exp" class="exp-fill job-exp-fill" style="width: 0%"></div>
+          </div>
+          <span id="ui-job-pct" class="exp-pct">0%</span>
+        </div>
+      </div>
+
+      <div class="info-footer">
+        <div class="zeny-pill" title="Zeny (Currency)">
+          <span class="coin-icon">🪙</span>
+          <span id="ui-zeny">1,500</span> Z
+        </div>
+        <div class="hud-quick-buttons">
+          <button class="ro-mini-btn" id="btn-toggle-stats" title="Status & Stats (C)">
+            Stats <span id="ui-stat-badge" class="badge-dot hidden">!</span>
+          </button>
+          <button class="ro-mini-btn" id="btn-toggle-inv" title="Inventory (I)">Items</button>
+          <button class="ro-mini-btn" id="btn-toggle-guide" title="Map & Controls Help (H)">Help</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quest Tracker Panel (Under Basic Info) -->
+  <div id="hud-quest-tracker" class="ro-window">
+    <div class="ro-titlebar">
+      <span class="ro-title-dot"></span>
+      <span class="ro-title-text">Geffen Magic Academy Task</span>
+    </div>
+    <div class="ro-body quest-body">
+      <div id="quest-title" class="quest-title">Speak with Archmage Elion</div>
+      <div id="quest-desc" class="quest-desc">Visit Archmage Elion near the base of Central Geffen Tower.</div>
+      <div id="quest-progress" class="quest-progress"></div>
+    </div>
+  </div>
+
+  <!-- Top-Right: Minimap & Environment Controls -->
+  <div id="hud-minimap" class="ro-window">
+    <div class="ro-titlebar">
+      <span class="ro-title-dot"></span>
+      <span id="minimap-title" class="ro-title-text">Geffen (0, 0)</span>
+      <button id="btn-center-cam" class="title-btn" title="Reset Camera Angle (R)">⟳</button>
+    </div>
+    <div class="minimap-wrapper">
+      <canvas id="minimap-canvas" width="190" height="190"></canvas>
+      <div class="minimap-compass">N</div>
+    </div>
+    <div class="env-toolbar">
+      <button id="btn-time-day" class="env-btn active" title="Sunny Day">☀️ Day</button>
+      <button id="btn-time-sunset" class="env-btn" title="Golden Dusk">🌅 Dusk</button>
+      <button id="btn-time-night" class="env-btn" title="Arcane Starlight">🌙 Night</button>
+      <button id="btn-audio" class="env-btn" title="Toggle Retro Synth Audio">🔊 SFX</button>
+    </div>
+    <div class="teleport-toolbar">
+      <span class="tp-label">Warp:</span>
+      <button class="tp-btn" data-warp="tower">Tower</button>
+      <button class="tp-btn" data-warp="academy">Academy</button>
+      <button class="tp-btn" data-warp="field">Outskirts</button>
+      <button class="tp-btn" data-warp="dungeon">Dungeon B1</button>
+    </div>
+  </div>
+
+  <!-- Target Monster Info Banner (Top-Center) -->
+  <div id="hud-target-banner" class="target-banner hidden">
+    <div class="target-header">
+      <span id="target-element" class="element-tag">Water</span>
+      <span id="target-name" class="target-name">Poring</span>
+      <span id="target-lv" class="target-lv">Lv. 1</span>
+    </div>
+    <div class="target-hp-track">
+      <div id="target-hp-fill" class="target-hp-fill" style="width: 100%"></div>
+      <span id="target-hp-text" class="target-hp-text">60 / 60</span>
+    </div>
+  </div>
+
+  <!-- Zone Announcement Banner (Center Screen Fade) -->
+  <div id="zone-announcement" class="zone-announcement hidden">
+    <div class="zone-ann-sub" id="zone-ann-sub">Rune-Midgarts Kingdom</div>
+    <div class="zone-ann-title" id="zone-ann-title">GEFFEN — CITY OF MAGIC</div>
+    <div class="zone-ann-line"></div>
+  </div>
+
+  <!-- Status / Stats Modal Window (Toggleable) -->
+  <div id="modal-stats" class="ro-window modal-panel hidden">
+    <div class="ro-titlebar">
+      <span class="ro-title-dot"></span>
+      <span class="ro-title-text">Character Status (C)</span>
+      <button class="title-close-btn" data-close="modal-stats">✕</button>
+    </div>
+    <div class="ro-body stats-body">
+      <div class="stat-rows">
+        <div class="stat-line">
+          <span class="stat-key" title="Increases Magic Attack & Max SP">INT (Magic)</span>
+          <strong id="stat-int">18</strong>
+          <button class="stat-plus-btn" data-stat="int">+</button>
+        </div>
+        <div class="stat-line">
+          <span class="stat-key" title="Reduces Spell Cast Time & increases Hit">DEX (Cast Spd)</span>
+          <strong id="stat-dex">12</strong>
+          <button class="stat-plus-btn" data-stat="dex">+</button>
+        </div>
+        <div class="stat-line">
+          <span class="stat-key" title="Increases Max HP & Defense">VIT (Defense)</span>
+          <strong id="stat-vit">10</strong>
+          <button class="stat-plus-btn" data-stat="vit">+</button>
+        </div>
+        <div class="stat-line">
+          <span class="stat-key" title="Increases Movement & Flee">AGI (Speed)</span>
+          <strong id="stat-agi">10</strong>
+          <button class="stat-plus-btn" data-stat="agi">+</button>
+        </div>
+      </div>
+      <div class="derived-stats">
+        <div><span>MATK:</span> <strong id="derived-matk">64 ~ 88</strong></div>
+        <div><span>Cast Time:</span> <strong id="derived-cast">88%</strong></div>
+        <div><span>MDEF / DEF:</span> <strong id="derived-def">24 + 12</strong></div>
+        <div><span>Move Spd:</span> <strong id="derived-spd">105%</strong></div>
+      </div>
+      <div class="stat-points-footer">
+        Status Points Available: <strong id="ui-stat-points">3</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory Window (Toggleable) -->
+  <div id="modal-inventory" class="ro-window modal-panel hidden">
+    <div class="ro-titlebar">
+      <span class="ro-title-dot"></span>
+      <span class="ro-title-text">Inventory & Loot (I)</span>
+      <button class="title-close-btn" data-close="modal-inventory">✕</button>
+    </div>
+    <div class="ro-body inv-body">
+      <div id="inventory-grid" class="inventory-grid"></div>
+      <div class="inv-footer">
+        <span>Click consumables to use • Sell loot at Merchant</span>
+        <button id="btn-sell-loot" class="ro-action-btn">Sell All Monster Loot</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help / Map Guide Modal -->
+  <div id="modal-guide" class="ro-window modal-panel hidden">
+    <div class="ro-titlebar">
+      <span class="ro-title-dot"></span>
+      <span class="ro-title-text">Adventurer's Guide to Geffen (H)</span>
+      <button class="title-close-btn" data-close="modal-guide">✕</button>
+    </div>
+    <div class="ro-body guide-body">
+      <h4>🗺️ The Circular City of Geffen</h4>
+      <ul>
+        <li><strong>Central Plaza:</strong> The soaring <em>Geffen Tower</em> surrounded by an arcane moat and 4 cardinal stone bridges (N, S, E, W).</li>
+        <li><strong>Outer Ring Boulevard:</strong> Magic Academy (NW), Weapon & Inn (NE), Blacksmith Forge (SE), Alchemy & Potion Shop (SW).</li>
+        <li><strong>Geffen Outskirts (Field):</strong> Pass through any of the 4 outer town gates to hunt Porings, Fabres, and Poison Spores.</li>
+        <li><strong>Geffen Dungeon B1:</strong> Step into the glowing portal at the base of Geffen Tower (or use the Warp button) to battle Whispers & the Arch-Doppel MVP!</li>
+      </ul>
+      <h4>🎮 Controls</h4>
+      <ul>
+        <li><strong>Left-Click Ground:</strong> Classic RO Click-to-Move with tile cursor.</li>
+        <li><strong>WASD / Arrow Keys:</strong> Direct 3D movement.</li>
+        <li><strong>Left-Click Monster / NPC:</strong> Attack with selected spell or talk to NPC.</li>
+        <li><strong>Right-Click + Drag (or Q/E):</strong> Rotate 3D camera around your character.</li>
+        <li><strong>Mouse Scroll Wheel:</strong> Zoom camera in/out.</li>
+        <li><strong>Keys 1–6:</strong> Select / Cast Spells (Fire Bolt, Cold Bolt, Lightning Bolt, Meteor Storm, Energy Heal, Potion).</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- NPC Dialog Modal (Center-Bottom) -->
+  <div id="modal-npc-dialog" class="ro-window npc-dialog hidden">
+    <div class="ro-titlebar">
+      <span class="ro-title-dot"></span>
+      <span id="npc-dialog-title" class="ro-title-text">Kafra Staff</span>
+      <button class="title-close-btn" data-close="modal-npc-dialog">✕</button>
+    </div>
+    <div class="ro-body npc-dialog-body">
+      <div id="npc-portrait" class="npc-portrait">👩‍💼</div>
+      <div class="npc-dialog-content">
+        <div id="npc-dialog-text" class="npc-dialog-text">
+          Welcome to the Kafra Corporation! Our services are always on your side in Geffen.
+        </div>
+        <div id="npc-dialog-actions" class="npc-dialog-actions"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom-Left: Chat & Combat Log -->
+  <div id="hud-chatlog" class="ro-window">
+    <div class="ro-titlebar">
+      <span class="ro-title-dot"></span>
+      <span class="ro-title-text">System & Combat Log</span>
+      <span class="controls-hint">L-Click / WASD: Move • R-Drag / Q,E: Rotate • 1-6: Spells</span>
+    </div>
+    <div id="chat-messages" class="chat-messages"></div>
+  </div>
+
+  <!-- Bottom-Center: Skill Hotbar (F1-F6 / 1-6) -->
+  <div id="hud-skillbar" class="ro-window">
+    <div class="skillbar-slots">
+      <div class="skill-slot active" data-slot="1" title="Fire Bolt (Key 1) — Fast 3-hit Fire spell (12 SP)">
+        <span class="slot-key">1</span>
+        <span class="slot-icon">🔥</span>
+        <span class="slot-name">Fire Bolt</span>
+        <span class="slot-sp">12 SP</span>
+        <div class="slot-cd" id="cd-1"></div>
+      </div>
+      <div class="skill-slot" data-slot="2" title="Cold Bolt (Key 2) — Ice shards that chill & slow enemies (12 SP)">
+        <span class="slot-key">2</span>
+        <span class="slot-icon">❄️</span>
+        <span class="slot-name">Cold Bolt</span>
+        <span class="slot-sp">12 SP</span>
+        <div class="slot-cd" id="cd-2"></div>
+      </div>
+      <div class="skill-slot" data-slot="3" title="Lightning Bolt (Key 3) — High-voltage 4-hit Wind strike (15 SP)">
+        <span class="slot-key">3</span>
+        <span class="slot-icon">⚡</span>
+        <span class="slot-name">Jupitel</span>
+        <span class="slot-sp">15 SP</span>
+        <div class="slot-cd" id="cd-3"></div>
+      </div>
+      <div class="skill-slot" data-slot="4" title="Meteor Storm (Key 4) — Massive AoE Fire/Arcane bombardment around target/self (35 SP)">
+        <span class="slot-key">4</span>
+        <span class="slot-icon">☄️</span>
+        <span class="slot-name">Meteor</span>
+        <span class="slot-sp">35 SP</span>
+        <div class="slot-cd" id="cd-4"></div>
+      </div>
+      <div class="skill-slot" data-slot="5" title="Arcane Sanctuary (Key 5) — Restores HP & grants Mana Barrier (25 SP)">
+        <span class="slot-key">5</span>
+        <span class="slot-icon">✨</span>
+        <span class="slot-name">Sanctuary</span>
+        <span class="slot-sp">25 SP</span>
+        <div class="slot-cd" id="cd-5"></div>
+      </div>
+      <div class="skill-slot" data-slot="6" title="Use Red/Blue Potion (Key 6) — Instant HP & SP recovery">
+        <span class="slot-key">6</span>
+        <span class="slot-icon">🧪</span>
+        <span class="slot-name">Potion</span>
+        <span class="slot-sp" id="potion-count">x5</span>
+        <div class="slot-cd" id="cd-6"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

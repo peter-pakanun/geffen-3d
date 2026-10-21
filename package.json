@@ -1,0 +1,8 @@
+{
+  "name": "geffen-3d",
+  "version": "1.0.0",
+  "description": "3D Browser-Based RPG set in Geffen, the City of Magic (Ragnarok Online inspired)",
+  "scripts": {
+    "start": "npx serve -l 3000 ."
+  }
+}
